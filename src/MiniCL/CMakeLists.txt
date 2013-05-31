@@ -1,7 +1,7 @@
 #MiniCL provides a small subset of OpenCL
 
 INCLUDE_DIRECTORIES(
-	${BULLET_PHYSICS_SOURCE_DIR}/src
+	${PROJECT_SOURCE_DIR}/src
 	${VECTOR_MATH_INCLUDE}
 )
 
