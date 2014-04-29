@@ -12,18 +12,23 @@ function createDemos( demos, incdirs, linknames)
 	  	includedirs {incdirs}
 	  
 		configuration { "Windows" }
-	 		links { "glut32","glew32","opengl32" }
+			defines { "GLEW_STATIC"}
+	 		links { "opengl32" }
 			includedirs{	"../Glut"	}
 	 		libdirs {"../Glut"}
-	 		files   { "../msvc/bullet.rc" }
+	 		files   { "../build/bullet.rc" }
+	 		
+	 		configuration {"Windows", "x32"}
+				links {"glew32s","glut32"}
+			configuration {"Windows", "x64"}
+				links {"glew64s", "glut64"}
 	
-		configuration {"MaxOSX"}
-			print "hello"
+		configuration {"MacOSX"}
+			--print "hello"
 	 		linkoptions { "-framework Carbon -framework OpenGL -framework AGL -framework Glut" } 
 		
 		configuration {"not Windows", "not MacOSX"}
 			links {"GL","GLU","glut"}
-		
 		configuration{}
 	
 		links { 
@@ -55,35 +60,42 @@ end
     "DynamicControlDemo",
     "EPAPenDepthDemo",
     "ForkLiftDemo",
+    "FeatherstoneMultiBodyDemo",
     "FractureDemo",
     "GenericJointDemo",
     "GimpactTestDemo",
     "GjkConvexCastDemo",
-    "HelloWorld",
+    "GyroscopicDemo",
     "InternalEdgeDemo",
     "MovingConcaveDemo",
     "MultiMaterialDemo",
     "RagdollDemo",
     "Raytracer",
+    "RaytestDemo",
+    "RollingFrictionDemo",
     "SimplexDemo",
     "SliderConstraintDemo",
     "TerrainDemo",
     "UserCollisionAlgorithm",
-    "VehicleDemo"
+    "VehicleDemo",
+    "VoronoiFractureDemo"
   }
 
 -- the following demos require custom include or link settings
 
- createDemos(localdemos,{"../src","OpenGL"},{"OpenGLSupport","LinearMath","BulletCollision","BulletDynamics"})
+ createDemos({"HelloWorld"},{"../src"},{"BulletDynamics","BulletCollision","LinearMath"})
+
+ createDemos(localdemos,{"../src","OpenGL"},{"OpenGLSupport","BulletDynamics", "BulletCollision", "LinearMath"})
  
- createDemos({"ConvexDecompositionDemo"},{"../Extras/HACD","../src","OpenGL"},{"OpenGLSupport","LinearMath","BulletCollision","BulletDynamics", "HACD"})
+ createDemos({"ConvexDecompositionDemo"},{"../Extras/HACD","../Extras/ConvexDecomposition","../src","OpenGL"},{"OpenGLSupport","BulletDynamics", "BulletCollision", "LinearMath","HACD","ConvexDecomposition"})
  
- createDemos({"SoftDemo"},{"../src","OpenGL"}, {"OpenGLSupport","LinearMath","BulletCollision","BulletDynamics", "BulletSoftBody"})
+ createDemos({"SoftDemo"},{"../src","OpenGL"}, {"OpenGLSupport","BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"})
  
- createDemos({"SerializeDemo"},{"../Extras/Serialize/BulletFileLoader","../Extras/Serialize/BulletWorldImporter","../src","OpenGL"},{"OpenGLSupport","LinearMath","BulletCollision","BulletDynamics", "BulletSoftBody", "BulletFileLoader","BulletWorldImporter"})
+ createDemos({"SerializeDemo"},{"../Extras/Serialize/BulletFileLoader","../Extras/Serialize/BulletWorldImporter","../src","OpenGL"},{"OpenGLSupport","BulletWorldImporter", "BulletFileLoader", "BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"})
+
+createDemos({"BulletXmlImportDemo"},{"../Extras/Serialize/BulletFileLoader","../Extras/Serialize/BulletXmlWorldImporter", "../Extras/Serialize/BulletWorldImporter","../src","OpenGL"},{"OpenGLSupport","BulletXmlWorldImporter","BulletWorldImporter", "BulletFileLoader", "BulletSoftBody", "BulletDynamics", "BulletCollision", "LinearMath"})
  
 
-   
 include "OpenGL"
  
  

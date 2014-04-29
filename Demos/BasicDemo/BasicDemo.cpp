@@ -34,7 +34,32 @@ subject to the following restrictions:
 #include "btBulletDynamicsCommon.h"
 
 #include <stdio.h> //printf debugging
+#include "GLDebugDrawer.h"
+#include "LinearMath/btAabbUtil2.h"
 
+static GLDebugDrawer gDebugDraw;
+
+///The MyOverlapCallback is used to show how to collect object that overlap with a given bounding box defined by aabbMin and aabbMax. 
+///See m_dynamicsWorld->getBroadphase()->aabbTest.
+struct	MyOverlapCallback : public btBroadphaseAabbCallback
+{
+	btVector3 m_queryAabbMin;
+	btVector3 m_queryAabbMax;
+	
+	int m_numOverlap;
+	MyOverlapCallback(const btVector3& aabbMin, const btVector3& aabbMax ) : m_queryAabbMin(aabbMin),m_queryAabbMax(aabbMax),m_numOverlap(0)	{}
+	virtual bool	process(const btBroadphaseProxy* proxy)
+	{
+		btVector3 proxyAabbMin,proxyAabbMax;
+		btCollisionObject* colObj0 = (btCollisionObject*)proxy->m_clientObject;
+		colObj0->getCollisionShape()->getAabb(colObj0->getWorldTransform(),proxyAabbMin,proxyAabbMax);
+		if (TestAabbAgainstAabb2(proxyAabbMin,proxyAabbMax,m_queryAabbMin,m_queryAabbMax))
+		{
+			m_numOverlap++;
+		}
+		return true;
+	}
+};
 
 void BasicDemo::clientMoveAndDisplay()
 {
@@ -49,6 +74,15 @@ void BasicDemo::clientMoveAndDisplay()
 		m_dynamicsWorld->stepSimulation(ms / 1000000.f);
 		//optional but useful: debug drawing
 		m_dynamicsWorld->debugDrawWorld();
+
+		btVector3 aabbMin(1,1,1);
+		btVector3 aabbMax(2,2,2);
+
+		MyOverlapCallback aabbOverlap(aabbMin,aabbMax);
+		m_dynamicsWorld->getBroadphase()->aabbTest(aabbMin,aabbMax,aabbOverlap);
+		
+		if (aabbOverlap.m_numOverlap)
+			printf("#aabb overlap = %d\n", aabbOverlap.m_numOverlap);
 	}
 		
 	renderme(); 
@@ -100,11 +134,13 @@ void	BasicDemo::initPhysics()
 	m_solver = sol;
 
 	m_dynamicsWorld = new btDiscreteDynamicsWorld(m_dispatcher,m_broadphase,m_solver,m_collisionConfiguration);
+	m_dynamicsWorld->setDebugDrawer(&gDebugDraw);
 	
 	m_dynamicsWorld->setGravity(btVector3(0,-10,0));
 
 	///create a few basic rigid bodies
-	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
+	btBoxShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
+	//groundShape->initializePolyhedralFeatures();
 //	btCollisionShape* groundShape = new btStaticPlaneShape(btVector3(0,1,0),50);
 	
 	m_collisionShapes.push_back(groundShape);
@@ -138,7 +174,7 @@ void	BasicDemo::initPhysics()
 		//create a few dynamic rigidbodies
 		// Re-using the same collision is better for memory usage and performance
 
-		btCollisionShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
+		btBoxShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
 		//btCollisionShape* colShape = new btSphereShape(btScalar(1.));
 		m_collisionShapes.push_back(colShape);
 

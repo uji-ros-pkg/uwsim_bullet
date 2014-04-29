@@ -33,7 +33,7 @@
 #include "BulletCollision/NarrowPhaseCollision/btMinkowskiPenetrationDepthSolver.h"
 #include "BulletCollision/NarrowPhaseCollision/btGjkPairDetector.h"
 #include "BulletCollision/NarrowPhaseCollision/btGjkEpaPenetrationDepthSolver.h"
-#include "LinearMath/btStackAlloc.h"
+
 
 //We can use the Bullet EPA or sampling penetration depth solver, but comparison might be useful
 //#define COMPARE_WITH_SOLID35_AND_OTHER_EPA 1
@@ -210,7 +210,8 @@ void MyConvex::Render(bool only_wireframe, const btVector3& wire_color) const
 	const float Scale = 1.0f;
 	glPushMatrix();
 
-	btScalar glmat[16];	//4x4 column major matrix for OpenGL.
+	ATTRIBUTE_ALIGNED16(btScalar) glmat[16];	//4x4 column major matrix for OpenGL.
+
 	mTransform.getOpenGLMatrix(glmat);
 #ifndef BT_USE_DOUBLE_PRECISION
 	glMultMatrixf(&(glmat[0]));
@@ -298,8 +299,7 @@ static float gDepth;
 		}
 	};
 
-//2 Mb by default, could be made smaller
-btStackAlloc gStackAlloc(1024*1024*2);
+
 
 static bool TestEPA(const MyConvex& hull0, const MyConvex& hull1)
 {
@@ -345,7 +345,7 @@ static bool TestEPA(const MyConvex& hull0, const MyConvex& hull1)
 	btDiscreteCollisionDetectorInterface::ClosestPointInput input;
 	input.m_transformA = hull0.mTransform;
 	input.m_transformB = hull1.mTransform;
-	input.m_stackAlloc = &gStackAlloc;
+	
 
 	MyResult output;
 	GJK.getClosestPoints(input, output, 0);
@@ -384,9 +384,9 @@ static bool TestSepAxis(const btVector3& sep_axis, const MyConvex& hull0, const 
 		return false;
 
 	float d0 = Max0 - Min1;
-	assert(d0>=0.0f);
+	btAssert(d0>=0.0f);
 	float d1 = Max1 - Min0;
-	assert(d1>=0.0f);
+	btAssert(d1>=0.0f);
 	depth = d0<d1 ? d0:d1;
 	return true;
 }

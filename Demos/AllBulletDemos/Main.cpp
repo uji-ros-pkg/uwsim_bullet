@@ -29,6 +29,7 @@
 #include "BulletSoftBody/btSoftBodyHelpers.h"
 
 #include "GLDebugDrawer.h"
+static GLDebugDrawer dDebugDraw2;
 
 #include "LinearMath/btQuickprof.h"
 
@@ -46,13 +47,14 @@ namespace
 	int framePeriod;//todo: test if this value should be 0
 	int mainWindow;
 	GLUI *glui;
-	float hz;
+	//float hz;
 	float viewZoom=20.f;
 	float viewX;
 	float viewY;
 	int tx, ty, tw, th;
 	int	gDrawAabb;
 	int	gWireFrame;
+    int gDrawNormals;
 	int gHelpText;
 	int gDebugConstraints;
 	int	gDebugContacts;
@@ -81,6 +83,7 @@ void	setDefaultSettings()
 	height = 768;//480;
 	iterationCount = 10;
 	gDrawAabb=0;
+    gDrawNormals=0;
 	gWireFrame=0;
 	gDebugContacts=0;
 	//enable constraint debug visualization for first demo, only if user hasn't overridden the setting
@@ -97,12 +100,12 @@ void	setDefaultSettings()
 	gDrawClusters=0;
 
 	gDebugNoDeactivation = 0;
-	gUseSplitImpulse = 0;
+	gUseSplitImpulse = 1;
 	gUseWarmstarting = 1;
-	gRandomizeConstraints = 1;
+	gRandomizeConstraints = 0;
 	gErp = 0.2f;
 	gSlop=0.0f;
-	gErp2 = 0.1f;
+	gErp2 = 0.81f;
 	gWarmStartingParameter = 0.85f;
 	
 }
@@ -171,7 +174,7 @@ DemoApplication* CreatDemo(btDemoEntry* entry)
 	btAssert(demo);
 	if (demo->getDynamicsWorld())
 	{
-		demo->getDynamicsWorld()->setDebugDrawer(new GLDebugDrawer());
+		demo->getDynamicsWorld()->setDebugDrawer(&dDebugDraw2);
 		gDrawTextures = demo->getTexturing();
 		gDrawShadows = demo->getShadows();
 		if (glui)
@@ -226,7 +229,13 @@ void SimulationLoop()
 	} else
 	{
 		demo->setDebugMode(demo->getDebugMode() & (~btIDebugDraw::DBG_DrawWireframe));
-
+	}
+    if (gDrawNormals)
+	{
+		demo->setDebugMode(demo->getDebugMode() |btIDebugDraw::DBG_DrawNormals);
+	} else
+	{
+		demo->setDebugMode(demo->getDebugMode() & (~btIDebugDraw::DBG_DrawNormals));
 	}
 	if (gHelpText)
 	{
@@ -327,12 +336,10 @@ void SimulationLoop()
                 gDebugConstraints=0;
         	} else
         	{
-               	  gDebugConstraints=1;
+                gDebugConstraints=1;
         	}
 
 		testIndex = testSelection;
-		if (demo->getDynamicsWorld() && demo->getDynamicsWorld()->getDebugDrawer())
-			delete demo->getDynamicsWorld()->getDebugDrawer();
 		delete demo;
 		entry = g_demoEntries + testIndex;
 		demo = CreatDemo(entry);
@@ -345,8 +352,6 @@ void SimulationLoop()
 
 void	RestartScene()
 {
-	if (demo->getDynamicsWorld() && demo->getDynamicsWorld()->getDebugDrawer())
-			delete demo->getDynamicsWorld()->getDebugDrawer();
 	delete demo;
 	entry = g_demoEntries + testIndex;
 	demo = CreatDemo(entry);
@@ -370,8 +375,6 @@ void Keyboard(unsigned char key, int x, int y)
 
 		// Press 'r' to reset.
 	case 'r':
-		if (demo->getDynamicsWorld() && demo->getDynamicsWorld()->getDebugDrawer())
-			delete demo->getDynamicsWorld()->getDebugDrawer();
 		delete demo;
 		demo = CreatDemo(entry);
 		Resize(width,height);
@@ -531,6 +534,7 @@ int main(int argc, char** argv)
 	glui->add_checkbox_to_panel(drawPanel, "Help", &gHelpText);
 	glui->add_checkbox_to_panel(drawPanel, "AABBs", &gDrawAabb);
 	glui->add_checkbox_to_panel(drawPanel, "Wireframe", &gWireFrame);
+    glui->add_checkbox_to_panel(drawPanel, "Normals", &gDrawNormals);
 	glui->add_checkbox_to_panel(drawPanel, "Contacts", &gDebugContacts);
 	glui->add_checkbox_to_panel(drawPanel, "Constraints", &gDebugConstraints);
 

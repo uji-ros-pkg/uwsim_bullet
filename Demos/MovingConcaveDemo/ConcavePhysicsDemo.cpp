@@ -16,6 +16,7 @@ subject to the following restrictions:
 #include "btBulletDynamicsCommon.h"
 #include "ConcaveDemo.h"
 
+
 #include "LinearMath/btDefaultMotionState.h"
 #include "LinearMath/btIDebugDraw.h"
 #include "LinearMath/btQuickprof.h"
@@ -23,7 +24,7 @@ subject to the following restrictions:
 #include "BulletCollision/Gimpact/btGImpactShape.h"
 #include "BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h"
 #include "GLDebugFont.h"
-
+#include "BulletCollision/Gimpact/btCompoundFromGimpact.h"
 
 
 #include "GLDebugDrawer.h"
@@ -32,7 +33,7 @@ subject to the following restrictions:
 #include "GlutStuff.h"
 
 
-GLDebugDrawer	debugDrawer;
+GLDebugDrawer	debugDrawer1;
 
 //***************************THE FAMOUS BUNNY TRIMESH********************************************//
 
@@ -1431,20 +1432,20 @@ inline btScalar	calculateCombinedRestitution(float restitution0,float restitutio
 
 
 
-bool CustomMaterialCombinerCallback(btManifoldPoint& cp,	const btCollisionObject* colObj0,int partId0,int index0,const btCollisionObject* colObj1,int partId1,int index1)
+bool CustomMaterialCombinerCallback(btManifoldPoint& cp,	const btCollisionObjectWrapper* colObj0Wrap,int partId0,int index0,const btCollisionObjectWrapper* colObj1Wrap,int partId1,int index1)
 {
 
-	float friction0 = colObj0->getFriction();
-	float friction1 = colObj1->getFriction();
-	float restitution0 = colObj0->getRestitution();
-	float restitution1 = colObj1->getRestitution();
+	float friction0 = colObj0Wrap->getCollisionObject()->getFriction();
+	float friction1 = colObj1Wrap->getCollisionObject()->getFriction();
+	float restitution0 = colObj0Wrap->getCollisionObject()->getRestitution();
+	float restitution1 = colObj1Wrap->getCollisionObject()->getRestitution();
 
-	if (colObj0->getCollisionFlags() & btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK)
+	if (colObj0Wrap->getCollisionObject()->getCollisionFlags() & btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK)
 	{
 		friction0 = 1.0;//partId0,index0
 		restitution0 = 0.f;
 	}
-	if (colObj1->getCollisionFlags() & btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK)
+	if (colObj1Wrap->getCollisionObject()->getCollisionFlags() & btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK)
 	{
 		if (index1&1)
 		{
@@ -1631,10 +1632,19 @@ void	ConcaveDemo::initGImpactCollision()
 		3*sizeof(int),
 		NUM_VERTICES,(REAL*) &gVertices[0],sizeof(REAL)*3);
 
-	btGImpactMeshShape * trimesh = new btGImpactMeshShape(indexVertexArrays);
-	trimesh->setLocalScaling(btVector3(4.f,4.f,4.f));
-	trimesh->updateBound();
-	m_trimeshShape = trimesh;
+	{
+		btGImpactMeshShape * trimesh = new btGImpactMeshShape(indexVertexArrays);
+		trimesh->setLocalScaling(btVector3(4.f,4.f,4.f));
+		trimesh->updateBound();
+#define USE_COMPOUND
+#ifdef USE_COMPOUND
+		m_trimeshShape = btCreateCompoundFromGimpactShape(trimesh,1);
+		delete trimesh;
+		trimesh=0;
+#else
+		m_trimeshShape = trimesh;
+#endif
+	}
 
 	//register algorithm
 
@@ -1655,7 +1665,7 @@ void	ConcaveDemo::initPhysics()
 
 	btConstraintSolver* constraintSolver = new btSequentialImpulseConstraintSolver();
 	m_dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,constraintSolver,collisionConfiguration);
-
+	m_dynamicsWorld ->setGravity(btVector3(0,0,0));
 
 	//create trimesh model and shape
 	initGImpactCollision();
@@ -1694,7 +1704,7 @@ void	ConcaveDemo::initPhysics()
 	//enable custom material callback
 	staticBody->setCollisionFlags(staticBody->getCollisionFlags()|btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 
-
+#if 0
 	//static plane
 	btVector3 normal(0.4,1.5,-0.4);
 	normal.normalize();
@@ -1714,10 +1724,10 @@ void	ConcaveDemo::initPhysics()
 			localCreateRigidBody(1, startTransform,boxShape);
 		}
 	}
+#endif
+	shootTrimesh(btVector3(0,10,0),btVector3(0,10,0));
 
-	shootTrimesh(btVector3(0,10,0),btVector3(0,0,0));
-
-	shootTrimesh(btVector3(0,20,0),btVector3(0,10,0));
+	shootTrimesh(btVector3(0,10,0),btVector3(0,10,0));
 
 	//m_debugMode |= btIDebugDraw::DBG_DrawWireframe;
 
@@ -1877,8 +1887,11 @@ void ConcaveDemo::shootTrimesh(const btVector3& startPosition,const btVector3& d
 		btRigidBody* body = this->localCreateRigidBody(mass, startTransform,m_trimeshShape);
 
 		btVector3 linVel(destination[0]-startPosition[0],destination[1]-startPosition[1],destination[2]-startPosition[2]);
-		linVel.normalize();
-		linVel*=m_ShootBoxInitialSpeed*0.25;
+		if (linVel.length2()>SIMD_EPSILON)
+		{
+			linVel.normalize();
+			linVel*=m_ShootBoxInitialSpeed*0.25;
+		}
 
 		body->getWorldTransform().setOrigin(startPosition);
 		body->getWorldTransform().setRotation(btQuaternion(0,0,0,1));
@@ -1893,8 +1906,10 @@ void ConcaveDemo::clientMoveAndDisplay()
 
  	float dt = float(getDeltaTimeMicroseconds()) * 0.000001f;
 
-	m_dynamicsWorld->stepSimulation(dt);
-
+	
+	m_dynamicsWorld->stepSimulation(1./60.,0);//dt,0,1./60.);
+	CProfileManager::dumpAll();
+	
 	//optional but useful: debug drawing
 	m_dynamicsWorld->debugDrawWorld();
 

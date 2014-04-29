@@ -11,6 +11,10 @@ SET(GLUT_ROOT ${BULLET_PHYSICS_SOURCE_DIR}/Glut)
 # You shouldn't have to modify anything below this line 
 ########################################################
 
+IF(BUILD_AMD_OPENCL_DEMOS AND BUILD_MULTITHREADING)
+	SUBDIRS(AMD)
+ENDIF()
+
 INCLUDE_DIRECTORIES(
 ${BULLET_PHYSICS_SOURCE_DIR}/src 
 ${BULLET_PHYSICS_SOURCE_DIR}/Demos/OpenGL 
@@ -30,7 +34,7 @@ IF (USE_GLUT)
 			main.cpp
 			SerializeDemo.cpp 
 			SerializeDemo.h
-			${BULLET_PHYSICS_SOURCE_DIR}/msvc/bullet.rc
+			${BULLET_PHYSICS_SOURCE_DIR}/build/bullet.rc
 		)
 	ELSE()
 		ADD_EXECUTABLE(AppSerializeDemo
@@ -69,7 +73,7 @@ ELSE (USE_GLUT)
 		Win32SerializeDemo.cpp
 		SerializeDemo.cpp 
 		SerializeDemo.h
-		${BULLET_PHYSICS_SOURCE_DIR}/msvc/bullet.rc
+		${BULLET_PHYSICS_SOURCE_DIR}/build/bullet.rc
 	)
 ENDIF (USE_GLUT)
 
@@ -87,3 +91,5 @@ IF (INTERNAL_ADD_POSTFIX_EXECUTABLE_NAMES)
 			SET_TARGET_PROPERTIES(AppSerializeDemo PROPERTIES  MINSIZEREL_POSTFIX "_MinsizeRel")
 			SET_TARGET_PROPERTIES(AppSerializeDemo PROPERTIES  RELWITHDEBINFO_POSTFIX "_RelWithDebugInfo")
 ENDIF(INTERNAL_ADD_POSTFIX_EXECUTABLE_NAMES)
+
+

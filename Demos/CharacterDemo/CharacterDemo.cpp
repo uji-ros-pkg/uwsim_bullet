@@ -44,11 +44,11 @@ static int gJump = 0;
 
 CharacterDemo::CharacterDemo()
 :
+m_indexVertexArrays(0),
+m_vertices(0),
 m_cameraHeight(4.f),
 m_minCameraDistance(3.f),
-m_maxCameraDistance(10.f),
-m_indexVertexArrays(0),
-m_vertices(0)
+m_maxCameraDistance(10.f)
 {
 	m_character = 0;
 	m_cameraPosition = btVector3(30,30,30);
@@ -101,7 +101,7 @@ void CharacterDemo::initPhysics()
 	btTransform tr;
 	tr.setIdentity();
 
-	char* bspfilename = "BspDemo.bsp";
+	const char* bspfilename = "BspDemo.bsp";
 	void* memoryBuffer = 0;
 
 	FILE* file = fopen(bspfilename,"r");
@@ -341,7 +341,7 @@ void CharacterDemo::clientResetScene()
 {
 	m_dynamicsWorld->getBroadphase()->getOverlappingPairCache()->cleanProxyFromPairs(m_ghostObject->getBroadphaseHandle(),getDynamicsWorld()->getDispatcher());
 
-	m_character->reset ();
+	m_character->reset (m_dynamicsWorld);
 	///WTF
 	m_character->warp (btVector3(10.210001,-2.0306311,16.576973));
 	
