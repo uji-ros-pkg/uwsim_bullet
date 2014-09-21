@@ -429,6 +429,12 @@ include( CMakePackageConfigHelpers )
 file(RELATIVE_PATH CONF_REL_INCLUDE_DIR "${CMAKE_INSTALL_PREFIX}/lib"
    "${CMAKE_INSTALL_PREFIX}/include")
 
+IF(BUILD_SHARED_LIBS)
+SET(LIB_EXTENSION "so")
+ELSE()
+SET(LIB_EXTENSION "a")
+ENDIF()
+
 configure_package_config_file( 
     bulletConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/lib/${PROJECT_NAME}Config.cmake
     INSTALL_DESTINATION lib
