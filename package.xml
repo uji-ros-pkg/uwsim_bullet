@@ -5,6 +5,7 @@
   <description>The bullet library. See https://code.google.com/p/bullet</description>
 
   <maintainer email="marioprats@gmail.com">Mario Prats</maintainer>
+  <maintainer email="centelld@uji.es">Diego Centelles</maintainer>
   <license>Check author's website</license>
 
   <buildtool_depend>cmake</buildtool_depend>
